@@ -22,6 +22,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pyngrok
 
       - name: Create .env
         run: |
@@ -31,20 +32,17 @@ jobs:
           echo "BIN_CHANNEL=${{ secrets.BIN_CHANNEL }}" >> .env
           echo "HOST=0.0.0.0" >> .env
           echo "PORT=8080" >> .env
-          echo "PUBLIC_URL=http://127.0.0.1:8080" >> .env
+
+      - name: Start Ngrok Tunnel
+        run: |
+          python - <<EOF
+          from pyngrok import ngrok
+          url = ngrok.connect(8080)
+          with open(".env", "a") as f:
+              f.write(f"PUBLIC_URL={url}\n")
+          print("Public URL:", url)
+          EOF
 
       - name: Run TG-FileStream Bot
         run: |
           python3 -m tgfs
-- name: Install pyngrok
-  run: pip install pyngrok
-
-- name: Start Ngrok Tunnel
-  run: |
-    python - <<EOF
-    from pyngrok import ngrok
-    url = ngrok.connect(8080)
-    with open(".env", "a") as f:
-        f.write(f"PUBLIC_URL={url}\n")
-    print("Public URL:", url)
-    EOF
