@@ -36,3 +36,15 @@ jobs:
       - name: Run TG-FileStream Bot
         run: |
           python3 -m tgfs
+- name: Install pyngrok
+  run: pip install pyngrok
+
+- name: Start Ngrok Tunnel
+  run: |
+    python - <<EOF
+    from pyngrok import ngrok
+    url = ngrok.connect(8080)
+    with open(".env", "a") as f:
+        f.write(f"PUBLIC_URL={url}\n")
+    print("Public URL:", url)
+    EOF
