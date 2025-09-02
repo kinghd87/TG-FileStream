@@ -10,24 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repo
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # 3️⃣ Install dependencies
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyngrok
 
-      # 4️⃣ Create .env file without PUBLIC_URL
+      - name: Set Ngrok Auth Token
+        run: |
+          ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+
       - name: Create .env
         run: |
           echo "API_ID=${{ secrets.API_ID }}" >> .env
@@ -37,27 +37,15 @@ jobs:
           echo "HOST=0.0.0.0" >> .env
           echo "PORT=8080" >> .env
 
-      # 5️⃣ Start Ngrok Tunnel & Update PUBLIC_URL
       - name: Start Ngrok Tunnel
         run: |
           python - <<EOF
-          from pyngrok import ngrok, conf
-          import os
-
-          # Set Ngrok auth token from GitHub Secrets
-          conf.get_default().auth_token = os.getenv("NGROK_AUTH_TOKEN")
-
-          # Open HTTP tunnel on port 8080
+          from pyngrok import ngrok
           url = ngrok.connect(8080)
-
-          # Append PUBLIC_URL to .env
           with open(".env", "a") as f:
               f.write(f"PUBLIC_URL={url}\n")
-
-          print("Public URL for bot:", url)
+          print("Public URL:", url)
           EOF
 
-      # 6️⃣ Run TG-FileStream Bot
       - name: Run TG-FileStream Bot
-        run: |
-          python3 -m tgfs
+        run: python3 -m tgfs
